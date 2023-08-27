@@ -61,6 +61,18 @@
   header h2 {
     color: var(--text-color);
     font-size: 20px;
+  
+  }
+
+  .scrolling-text-container {
+    overflow: hidden;
+    width: 448px;
+  }
+
+  .scrolling-text {
+    white-space: nowrap; /* ngăn chữ xuống dòng */
+    animation: scrollText 8s linear infinite;
+    
   }
   
   /* CD */
@@ -204,3 +216,15 @@
     font-size: 18px;
   }
   
+
+  @keyframes scrollText {
+    0% {
+      transform: translateX(100%);
+      /* Bắt đầu từ bên phải */
+    }
+
+    100% {
+      transform: translateX(-100%);
+      /* di chuyển sang trái */
+    }
+  }
