@@ -28,6 +28,8 @@ const prevBtn = $('.btn-prev');
 const randomBtn = $('.btn-random');
 const repeatBtn = $('.btn-repeat');
 const playlist = $('.playlist');
+const Timeduration = $('.Timeduration');
+const Timeleft = $('.Timeleft');
 
 // this ở đây là app
 const app = {
@@ -36,6 +38,7 @@ const app = {
     isPlaying: false,
     isRandom: false,
     isRepeat: false,
+    progressSong: 0,
     config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
     setConfig: function(key, value) {
         this.config[key] = value;
@@ -165,7 +168,9 @@ const app = {
         audio.ontimeupdate = function() {
             if(audio.duration != NaN) {
                 const progressPercent = Math.floor((audio.currentTime / audio.duration) * 100);
-                progress.value = progressPercent
+                progress.value = progressPercent;
+                Timeleft.innerHTML = _this.formatTime(audio.currentTime); // thời gian đếm từng giây của bài hát từ 0 -> hết.
+                progress.setAttribute('title', _this.currentTime); // đưa mốc song về đầu progress
 
             }
             //console.log((audio.currentTime / audio.duration) * 100)
@@ -177,6 +182,16 @@ const app = {
             audio.currentTime = seekTime
             //console.log(seekTime)
         }
+
+        progress.addEventListener("mousemove", (e) => {
+            const progressWidth = progress.offsetWidth;
+            const mouseX = e.clientX - progressWidth.getBoundingClientRect().left;
+            const percentage = mouseX / progressWidth;
+            
+            cursor.style.left = mouseX + 'px';
+
+            console.log('time: ${minutes}:${seconds}');
+        })
 
         // Xử lý quay CD và dừng
         const cdThumbAnimate = cdThumb.animate([
@@ -259,6 +274,7 @@ const app = {
                 _this.loadCurrentSong();
                 audio.play();
                 _this.render();
+                _this.progressSong = 0;
             }
 
             // XỬ LÝ KHI CLICK VÀO OPTION CỦA SONG
@@ -294,8 +310,21 @@ const app = {
         heading.textContent = this.currentSong.name;
         cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
         audio.src = this.currentSong.path;
+        // TÍNH TỔNG THỜI GIAN CỦA MỖI SONG TRÊN TRỤC SONG
+        audio.onloadedmetadata = () => {
+            Timeduration.innerHTML = this.formatTime(audio.duration);
+            audio.currentTime = this.progressSong
+        }
     
         //console.log(heading, cdThumb, audio);
+    },
+
+    // ĐỊNH NGHĨA TIME VỀ PHÚT VÀ GIÂY TRÊN TRỤC TIME CỦA SONG
+    formatTime: function(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        const formattedTime = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        return formattedTime;
     },
 
     // LOAD CONFIG
@@ -307,6 +336,7 @@ const app = {
     // Khi next bài hát đến bài hát tiếp theo
     nextSong: function() {
         this.currentIndex++;
+        this.progressSong = 0;
         if(this.currentIndex >= this.songs.length) {
             this.currentIndex = 0
             // khi mà đã phát đến bài hát cuối cùng mà bấm next
@@ -318,6 +348,7 @@ const app = {
     // Khi lui bài hát
     prevSong: function() {
         this.currentIndex--;
+        this.progressSong = 0;
         if(this.currentIndex <= 0) {
             this.currentIndex = this.songs.length - 1;
             // Khi mà quay về bài trước đó thì bài muốn luôi lại
@@ -336,6 +367,7 @@ const app = {
         // do-while: chạy ít nhất 1 lần dù đúng hay sai
 
         this.currentIndex = newIndex;
+        this.progressSong = 0;
         this.loadCurrentSong();
     },
 
